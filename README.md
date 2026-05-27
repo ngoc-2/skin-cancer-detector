@@ -9,7 +9,6 @@ A deep learning web application that analyzes dermoscopic images of skin lesions
 ## Summary
 
 
-1:25 AM
 Melanoma makes up less than 4% of skin cancer cases but causes roughly 75% of skin cancer deaths. It is highly treatable when caught early, but biopsy-based diagnosis is slow, uncomfortable, and often inaccessible.
 
 This project uses deep learning to estimate the probability of malignancy from a photo of a skin lesion. A neural network learns to recognize patterns directly from pixel data, without being told what to look for. The specific architecture is a Convolutional Neural Network (CNN), which scans images with learned filters to build up features layer by layer: edges and colors first, then textures and shapes, then high-level patterns like irregular borders and uneven pigmentation. These correspond directly to the ABCD criteria dermatologists use to evaluate suspicious lesions.
