@@ -1,93 +1,96 @@
 # Skin Cancer Detection
 
-A deep learning application that analyzes a photo of a skin lesion and returns the probability of it being malignant. Submit an image from your phone camera or upload a file — the model outputs a benign/malignant classification with confidence scores for each class.
+A deep learning web application that analyzes dermoscopic images of skin lesions and returns the probability of malignancy. Upload a photo or use your camera — the model classifies the lesion as benign or malignant with a confidence score for each class.
 
-Live demo: [Hugging Face Spaces](#) — update after deploying
-
----
-
-## Overview
-
-Melanoma accounts for less than 4% of skin cancer cases but is responsible for approximately 75% of skin cancer deaths. It is only curable when caught early. Traditional diagnosis relies on dermoscopy and biopsy — procedures that are painful, slow, and inaccessible in rural or underserved areas.
-
-This project demonstrates how a convolutional neural network can assist in early detection by learning the same visual features that dermatologists use: asymmetry, border irregularity, color variation, and diameter (the clinical ABCD criteria). The model is trained on dermoscopic images from the ISIC 2017 benchmark dataset and returns a probability score rather than a hard binary decision, giving the user a sense of confidence in the result.
+**Live demo:** [huggingface.co/spaces/ngoc2/skin-cancer-detector](https://huggingface.co/spaces/ngoc2/skin-cancer-detector)  
 
 ---
 
-## How It Works
+## Summary
 
-1. You submit a photo of a skin lesion via file upload or phone camera
-2. The image is resized and normalized to match the format the model was trained on
-3. The image passes through an EfficientNet-B0 convolutional neural network
-4. The final layer outputs a probability for each class: Benign and Malignant
-5. The interface displays both probabilities as a confidence bar
+Melanoma accounts for less than 4% of skin cancer cases but roughly 75% of skin cancer deaths. It is only curable when caught early, but traditional diagnosis through biopsy is slow, painful, and inaccessible in many areas.
 
----
+This project applies **deep learning** — a subfield of machine learning where artificial neural networks with many layers automatically learn patterns from data — to the problem of skin cancer detection. Rather than manually engineering features like color histograms or texture descriptors, the neural network learns directly from raw pixel data which visual patterns distinguish malignant from benign lesions.
 
-## Model
+The model is built on a **Convolutional Neural Network (CNN)**, an architecture specifically designed for image analysis. CNNs are organized into layers of filters that scan across an image, each layer learning increasingly abstract features: the first layers detect low-level edges and color gradients, middle layers recognize textures and shapes, and the deepest layers identify high-level patterns like irregular borders, asymmetric growth, and uneven pigmentation — the same visual criteria dermatologists use clinically (the ABCD rule: Asymmetry, Border, Color, Diameter).
 
-**Architecture:** EfficientNet-B0 with a custom classification head, pretrained on ImageNet and fine-tuned on ISIC 2017 dermoscopic images.
+Rather than training a CNN from scratch — which would require millions of images — this project uses **transfer learning**: starting from EfficientNet-B0, a CNN pretrained on 1.2 million ImageNet photos. The network has already learned general visual features; we repurpose those features for dermoscopy by replacing the final classification layer and fine-tuning the entire network on the ISIC 2017 dataset of 2000 labeled skin lesion images.
 
-**Why CNN over ANN for this task:**
-Standard ANNs treat each pixel as an independent input, which loses all spatial information — the relationships between neighboring pixels that define shapes, textures, and edges. CNNs use convolutional filters that slide across the image, preserving spatial structure and learning hierarchical features: edges at early layers, textures at middle layers, and high-level patterns like irregular borders or uneven pigmentation at deeper layers. Shah et al. (2023) found that CNN consistently outperforms ANN and other classifiers for skin cancer image classification tasks.
-
-**Why EfficientNet-B0:**
-EfficientNet scales network depth, width, and input resolution together using a compound coefficient. This gives it better accuracy per parameter than older architectures like VGG or ResNet. The B0 variant is small enough to run on CPU while maintaining competitive AUC on medical imaging benchmarks.
-
-**Classification head:**
-The pretrained backbone outputs a 1280-dimensional feature vector. A custom head maps this to the binary output:
-
-```
-Dropout(0.4)
-Linear(1280 -> 512) + ReLU
-Dropout(0.2)
-Linear(512 -> 128) + ReLU
-Linear(128 -> 2)
-Softmax
-```
-
-**Training strategy — two phases:**
-
-Phase 1 freezes the pretrained backbone and trains only the classification head for 10 epochs at lr=1e-3. This lets the head converge on the pretrained features without corrupting them. Phase 2 unfreezes all layers and fine-tunes end-to-end at lr=1e-4 for 10 more epochs using cosine annealing. The lower learning rate in phase 2 preserves the pretrained weights while allowing the backbone to adapt to dermoscopic image characteristics.
-
-**Class imbalance handling:**
-The ISIC 2017 dataset is roughly 4:1 benign to malignant. A WeightedRandomSampler is used during training so each batch contains a balanced representation. This prevents the model from defaulting to always predicting benign.
-
-**Loss:** Cross-entropy  
-**Optimizer:** Adam  
-**Scheduler:** ReduceLROnPlateau (phase 1), CosineAnnealingLR (phase 2)
+The trained model is served through a **Gradio** web interface deployed on Hugging Face Spaces, making it accessible from any browser or phone camera without any local setup.
 
 ---
 
 ## Results
 
-| Metric      | Score |
-|-------------|-------|
-| Accuracy    | 80.5% |
+| Metric      | Score  |
+|-------------|--------|
+| Accuracy    | 80.5%  |
 | AUC-ROC     | 0.8213 |
-| Sensitivity | 63% |
-| Specificity | 85% |
+| Sensitivity | 63%    |
+| Specificity | 85%    |
 
-Fill in after running the training notebook. Benchmarks from literature for comparison: CNN-based models on ISIC data consistently achieve accuracy in the 85–99% range depending on architecture and dataset size (Shah et al., 2023; Akinrinade & Du, 2025). A multilayer perceptron trained with the ABCD rule achieved 96.9% accuracy (Kanimozhi & Murthi, 2016). The target for this project is AUC > 0.85 on the ISIC 2017 validation set.
+Trained on 2000 dermoscopic images from the ISIC 2017 dataset (1600 train, 400 validation). AUC of 0.82 means the model correctly ranks a randomly chosen malignant lesion above a randomly chosen benign lesion 82% of the time — a standard metric for medical classification tasks where class imbalance makes raw accuracy misleading.
 
 ---
 
-## Dataset
+## Tech Stack
 
-This project uses the ISIC 2017 Skin Lesion Classification dataset, the established benchmark for automated melanoma detection research.
+| Layer | Technology |
+|-------|------------|
+| Model | EfficientNet-B0 (PyTorch) |
+| Training | Transfer learning, two-phase fine-tuning |
+| Data | ISIC 2017 dermoscopy dataset |
+| Web app | Gradio |
+| Deployment | Hugging Face Spaces |
+| Language | Python 3.9 |
 
-Download from: https://challenge.isic-archive.com/data/#2017
+---
 
-Download Task 3 — Lesion Classification. You need the training images folder and the ground truth CSV. Place them here:
+## Machine Learning
 
+### Neural Networks
+
+A neural network is a computational model loosely inspired by the brain. It consists of layers of interconnected nodes (neurons), where each connection has a learned weight. During training, the network sees labeled examples (images + correct diagnoses), makes predictions, measures how wrong it was using a loss function, and adjusts every weight slightly via **backpropagation** — repeatedly propagating the error signal backwards through the network and using **gradient descent** to update weights in the direction that reduces error. After thousands of iterations over the training data, the network converges to weights that generalize well to new images it has never seen.
+
+### Why CNN over Standard ANN
+
+A standard **Artificial Neural Network (ANN)** flattens an image into a 1D vector and connects every pixel to every neuron. This destroys spatial relationships — a pixel's meaning depends entirely on its neighbors, and an ANN has no mechanism to exploit that structure. It also requires an enormous number of parameters for even a small image.
+
+A **Convolutional Neural Network (CNN)** solves this with two key operations:
+
+**Convolution** — small learnable filters (e.g. 3×3) slide across the image, computing a dot product at each position. Each filter learns to detect a specific local pattern regardless of where it appears in the image (translation invariance). Stacking many filters in a layer produces a feature map capturing different aspects of the image.
+
+**Pooling** — downsamples feature maps by taking the maximum or average value in small regions, reducing spatial dimensions while retaining the most important activations and providing robustness to small shifts and distortions.
+
+By stacking convolution and pooling layers, CNNs build a hierarchy of features from simple to complex, which is exactly what is needed to learn the ABCD criteria from raw dermoscopic pixels. Shah et al. (2023) found CNN consistently outperforms ANN and other classical classifiers for this task.
+
+### Architecture
+
+**Backbone:** EfficientNet-B0 pretrained on ImageNet. EfficientNet uses compound scaling to jointly increase network depth, width, and input resolution by a fixed ratio, achieving better accuracy per parameter than older architectures like VGG-16 or ResNet-50.
+
+**Custom classification head** (replaces EfficientNet's original 1000-class ImageNet head):
 ```
-data/
-├── ISIC-2017_Training_Data/
-│   └── *.jpg
-└── ISIC-2017_Training_Part3_GroundTruth.csv
+Dropout(0.4)          <- regularization to prevent overfitting
+Linear(1280 -> 512) + ReLU
+Dropout(0.2)
+Linear(512 -> 128) + ReLU
+Linear(128 -> 2)      <- binary output: Benign / Malignant
+Softmax               <- converts logits to probabilities that sum to 1
 ```
 
-The CSV contains columns: `image_id`, `melanoma`, `seborrheic_keratosis`. This project uses `melanoma` as the binary label — 1 = Malignant, 0 = Benign.
+### Training Strategy
+
+**Phase 1 — Frozen backbone (10 epochs, lr=1e-3):**
+The EfficientNet backbone weights are frozen. Only the new classification head is trained. This prevents random gradients from an untrained head from destroying the pretrained feature representations on the first pass.
+
+**Phase 2 — Full fine-tuning (10 epochs, lr=1e-4):**
+All layers are unfrozen. The entire network is fine-tuned end-to-end using cosine annealing learning rate scheduling. The lower learning rate preserves the pretrained backbone while allowing it to adapt its feature representations to dermoscopic image characteristics.
+
+**Optimizer:** Adam — an adaptive learning rate optimizer that maintains per-parameter learning rates, making it well suited for fine-tuning where different layers may need to update at different speeds.
+
+### Handling Class Imbalance
+
+The ISIC dataset is roughly 4:1 benign to malignant — matching real-world prevalence. Without correction, a naive model can achieve ~80% accuracy by always predicting benign, which is clinically useless. This project addresses imbalance with a **WeightedRandomSampler**: malignant samples are oversampled during training so each batch sees a roughly equal representation of both classes, forcing the model to learn discriminative features for the minority class.
 
 ---
 
@@ -97,21 +100,16 @@ The CSV contains columns: `image_id`, `melanoma`, `seborrheic_keratosis`. This p
 skin-cancer-detector/
 ├── README.md
 ├── requirements.txt
-├── .gitignore
 ├── notebook/
-│   └── train.ipynb          full pipeline: data -> preprocess -> train -> evaluate
-├── app/
-│   ├── app.py               Gradio web interface (file upload + camera)
-│   └── model.py             model definition and inference logic
-└── assets/
-    └── evaluation.png       confusion matrix and ROC curve generated by notebook
+│   └── train.ipynb       full pipeline: data -> preprocess -> train -> evaluate
+└── app/
+    ├── app.py            Gradio web interface (file upload + camera)
+    └── model.py          model architecture and inference logic
 ```
 
 ---
 
 ## Quickstart
-
-### Install
 
 ```bash
 git clone https://github.com/ngoc-2/skin-cancer-detector.git
@@ -119,45 +117,27 @@ cd skin-cancer-detector
 pip install -r requirements.txt
 ```
 
-### Train
+Download the ISIC 2017 dataset from https://challenge.isic-archive.com/data/#2017 (Task 1 images + Task 3 ground truth CSV) and place them in `data/`.
 
-Open `notebook/train.ipynb` and run all cells top to bottom. The notebook will:
+Open `notebook/train.ipynb` and run all cells to train the model. Training on CPU takes several hours — Google Colab with a free GPU is recommended.
 
-- Load and split the dataset 80/20, stratified by class
-- Visualize class distribution and sample images
-- Apply data augmentation to the training set
-- Run phase 1 training (frozen backbone, 10 epochs)
-- Run phase 2 fine-tuning (full model, 10 epochs)
-- Generate a confusion matrix and ROC curve saved to `assets/evaluation.png`
-- Save the best checkpoint to `app/best_model.pth`
-
-Training on CPU will take several hours. Google Colab with a free GPU is recommended.
-
-### Run the app
+Once `app/best_model.pth` is generated:
 
 ```bash
 python app/app.py
 ```
 
-Open http://localhost:7860. Upload a dermoscopic image or use your webcam. The app also runs on your local network so you can open it from a phone on the same WiFi.
-
-### Deploy
-
-1. Create a free Space at https://huggingface.co/new-space (select Gradio SDK)
-2. Push `app/app.py`, `app/model.py`, `app/best_model.pth`, and `requirements.txt` to the Space repo
-3. Update the live demo link at the top of this README
+Open http://localhost:7860 to use the app locally.
 
 ---
 
 ## References
 
-- Shah, A., Shah, M., et al. (2023). A comprehensive study on skin cancer detection using artificial neural network (ANN) and convolutional neural network (CNN). Clinical eHealth, 6, 76–84.
-- Akinrinade, O. & Du, C. (2025). Skin cancer detection using deep machine learning techniques. Intelligence-Based Medicine, 11, 100191.
-- Tan, M. & Le, Q. (2019). EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks. ICML.
+- Shah et al. (2023). A comprehensive study on skin cancer detection using ANN and CNN. *Clinical eHealth*, 6, 76-84.
+- Akinrinade & Du (2025). Skin cancer detection using deep machine learning techniques. *Intelligence-Based Medicine*, 11, 100191.
+- Tan & Le (2019). EfficientNet: Rethinking Model Scaling for CNNs. *ICML*.
 - ISIC Archive: https://www.isic-archive.com
 
 ---
 
-## Disclaimer
-
-This tool is for educational and research purposes only. It is not a medical device and should not be used for clinical diagnosis. Always consult a qualified dermatologist.
+*This tool is for educational and research purposes only. It is not a medical device. Always consult a qualified dermatologist.*
