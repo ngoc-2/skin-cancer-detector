@@ -63,10 +63,10 @@ The ISIC 2017 dataset is roughly 4:1 benign to malignant. A WeightedRandomSample
 
 | Metric      | Score |
 |-------------|-------|
-| Accuracy    |       |
-| AUC-ROC     |       |
-| Sensitivity |       |
-| Specificity |       |
+| Accuracy    | 80.5% |
+| AUC-ROC     | 0.8213 |
+| Sensitivity | 63% |
+| Specificity | 85% |
 
 Fill in after running the training notebook. Benchmarks from literature for comparison: CNN-based models on ISIC data consistently achieve accuracy in the 85–99% range depending on architecture and dataset size (Shah et al., 2023; Akinrinade & Du, 2025). A multilayer perceptron trained with the ABCD rule achieved 96.9% accuracy (Kanimozhi & Murthi, 2016). The target for this project is AUC > 0.85 on the ISIC 2017 validation set.
 
