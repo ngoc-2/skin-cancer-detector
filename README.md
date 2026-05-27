@@ -8,15 +8,13 @@ A deep learning web application that analyzes dermoscopic images of skin lesions
 
 ## Summary
 
-Melanoma accounts for less than 4% of skin cancer cases but roughly 75% of skin cancer deaths. It is only curable when caught early, but traditional diagnosis through biopsy is slow, painful, and inaccessible in many areas.
 
-This project applies **deep learning** — a subfield of machine learning where artificial neural networks with many layers automatically learn patterns from data — to the problem of skin cancer detection. Rather than manually engineering features like color histograms or texture descriptors, the neural network learns directly from raw pixel data which visual patterns distinguish malignant from benign lesions.
+1:25 AM
+Melanoma makes up less than 4% of skin cancer cases but causes roughly 75% of skin cancer deaths. It is highly treatable when caught early, but biopsy-based diagnosis is slow, uncomfortable, and often inaccessible.
 
-The model is built on a **Convolutional Neural Network (CNN)**, an architecture specifically designed for image analysis. CNNs are organized into layers of filters that scan across an image, each layer learning increasingly abstract features: the first layers detect low-level edges and color gradients, middle layers recognize textures and shapes, and the deepest layers identify high-level patterns like irregular borders, asymmetric growth, and uneven pigmentation — the same visual criteria dermatologists use clinically (the ABCD rule: Asymmetry, Border, Color, Diameter).
+This project uses deep learning to estimate the probability of malignancy from a photo of a skin lesion. A neural network learns to recognize patterns directly from pixel data, without being told what to look for. The specific architecture is a Convolutional Neural Network (CNN), which scans images with learned filters to build up features layer by layer: edges and colors first, then textures and shapes, then high-level patterns like irregular borders and uneven pigmentation. These correspond directly to the ABCD criteria dermatologists use to evaluate suspicious lesions.
 
-Rather than training a CNN from scratch — which would require millions of images — this project uses **transfer learning**: starting from EfficientNet-B0, a CNN pretrained on 1.2 million ImageNet photos. The network has already learned general visual features; we repurpose those features for dermoscopy by replacing the final classification layer and fine-tuning the entire network on the ISIC 2017 dataset of 2000 labeled skin lesion images.
-
-The trained model is served through a **Gradio** web interface deployed on Hugging Face Spaces, making it accessible from any browser or phone camera without any local setup.
+Rather than training from scratch, the model uses transfer learning, starting from EfficientNet-B0 (pretrained on 1.2 million images) and fine-tuning on 2000 labeled dermoscopy images from the ISIC 2017 dataset. The result runs in a Gradio web app on Hugging Face Spaces, accessible from any browser or phone.
 
 ---
 
